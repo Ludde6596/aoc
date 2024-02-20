@@ -11,6 +11,7 @@ Steg 4 loopa igenom alla seeds och spara min location
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <regex>
 
 std::vector<std::string> splitString(const std::string &s, char delimiter = ' ')
 {
@@ -25,40 +26,77 @@ std::vector<std::string> splitString(const std::string &s, char delimiter = ' ')
     return words;
 }
 
+std::vector<std::string> createNumList(const std::string &s)
+{
+    std::vector<std::string> numbers;
+    numbers = splitString(s, '\n');
+    std::regex npattern("\\d");
+    for (auto it = numbers.begin(); it != numbers.end(); it++)
+    {
+        if (!std::regex_search(*it, npattern))
+        {
+            numbers.erase(it);
+            it--;
+        }
+    }
+    return numbers;
+}
+
 int main()
 {
     std::vector<long int> seeds;
-    std::vector<std::vector<long int>> seed_to_soil;
-    std::vector<std::vector<long int>> soil_to_fertilizer;
-    std::vector<std::vector<long int>> fertilizer_to_water;
-    std::vector<std::vector<long int>> water_to_light;
-    std::vector<std::vector<long int>> light_to_temperature;
-    std::vector<std::vector<long int>> temperature_to_humidity;
-    std::vector<std::vector<long int>> humidity_to_location;
+    std::vector<std::vector<std::vector<long int>>> maps;
     std::fstream fs{"input.txt"};
     if (fs.fail())
     {
         std::cerr << "Fil kunde ej läsas";
         return -1;
     }
-    std::string line{};
-    int mapnum = 0;
-    while (std::getline(fs, line))
+    std::string section{};
+    std::vector<std::string> sections{};
+    while (std::getline(fs, section, ':'))
     {
-        std::vector<std::string> rowlist = splitString(line);
-        if (mapnum == 0)
+        sections.push_back(section);
+    }
+
+    std::vector<std::vector<std::string>> sections_list{};
+    for (std::string s : sections)
+    {
+        if (createNumList(s).size() > 0)
         {
-            rowlist.erase(rowlist.begin());
-            for (auto s : rowlist)
-            {
-                seeds.push_back(std::stol(s));
-            }
-            mapnum++;
+            sections_list.push_back(createNumList(s));
         }
     }
-    for (long int i : seeds)
+
+    std::vector<std::string> tempseeds = splitString(sections_list[0][0]);
+    for (std::string s : tempseeds)
     {
-        std::cout << i << std::endl;
+        seeds.push_back(std::stol(s));
+    }
+
+    for (auto it = sections_list.begin() + 1; it != sections_list.end(); it++)
+    {
+        std::vector<std::vector<long int>> tempm{};
+        for (auto s : *it)
+        {
+            std::vector<std::string> temps = splitString(s);
+            std::vector<long int> tempn{};
+            for (auto s : temps)
+            {
+                tempn.push_back(std::stol(s));
+            }
+            tempm.push_back(tempn);
+        }
+        maps.push_back(tempm);
+    }
+
+    for (auto v : maps[0])
+    {
+        std::cout << "SEPERATOR OF MAPPINGS" << std::endl;
+        for (auto i : v)
+        {
+            std::cout << i << std::endl;
+        }
     }
 
     return 0;
